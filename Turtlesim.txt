@@ -1,0 +1,63 @@
+source /opt/ros/foxy/setup.bash //Ros2 komutlarına erişim sağlamak için her kabuk açılışında kullanılan komut.
+printenv | grep -i ROS         //ros2 paketlerini görüntüler
+sudo apt install ros-foxy-turtlesim // paketi yükler
+ros2 pkg executables turtlesim       //paketin yüklü olma durumunu kontrol eder.
+turtlesim draw_square
+turtlesim mimic
+turtlesim turtle_teleop_key
+turtlesim turtlesim_node               //çalıştırılabilecek dosya komutları
+ros2 run turtlesim turtlesim_node         // tutlesim ekranını başlatır
+ros2 run turtlesim turtle_teleop_key      //kaplumbağayı kontrol etmek için yeni bir düğüm çalıştırılır.
+Turtlesim hizmetlerini ayarlamak için       //rqt
+/spawn servisi yeni bir kaplumbağa ekler.
+set_pen servisi kalemle ilgili özellikleri ayarlar.  r-g-b 0-255 arası değerler alabailir.
+2.kaplumbağayı hareket ettirebilmek için // ros2 run turtlesim turtle_teleop_key --ros-args --remap turtle1/cmd_vel:=turtle2/cmd_vel komutu kullanılır.
+ROS'taki her düğüm tek, modüler bir amaçtan sorumlu olmalıdır; tekerlek motorlarını kontrol etmek veya bir lazer mesafe bulucudan sensör verilerini yayınlamak. Her düğüm, konular, hizmetler, eylemler veya parametreler aracılığıyla diğer düğümlerden veri gönderip alabilir.
+ros2 node lise     //çalışan düğümleri listeler.
+ros2 node info <node_name>   //düğüm hakkında detaylı bilgiye ulaşmak için.
+ROS Sistemini Görselleştirme: rqt_graph, bir ROS sistemindeki tüm aktif düğümleri, konuları (topics), servisleri, yayıncıları ve aboneleri gösteren bir görsel sunar. Bu, sistemin bütününü anlamak ve hata ayıklamak için oldukça faydalıdır. 
+İletişim ve Bağlantıları Gösterme: Grafik, düğümler arasındaki iletişimi ve veri akışını gösterir. Hangi düğümün hangi konulara abone olduğunu, hangi konulardan veri yayınladığını ve servislere nasıl eriştiğini anlamak için bu grafik kullanılır.
+ros2 topic echo <topic_name>      konuyu incelemek için kullanılan komut
+    Linear (Lineer):
+        x: 2.0
+        y: 0.0
+        z: 0.0
+
+    Angular (Açısal):
+        x: 0.0
+        y: 0.0
+        z: 0.0          //Bu değerler, bir robotun belirli bir anlık hareketini tanımlar. Örneğin, linear bölümündeki x değeri, robotun x ekseninde ileri doğru hareket ettiğini belirtir. angular bölümündeki değerler ise genellikle robotun dönme hareketini ifade eder. 
+        ros2 topic info /turtle1/cmd_vel  
+         ros2 topic info: Bu komut, belirtilen konu hakkında bilgi almanızı sağlayan ROS 2 komutudur.
+    /turtle1/cmd_vel: Bu, bilgi almak istediğiniz konunun adıdır. "/turtle1/cmd_vel" konusu genellikle bir robotun hız komutlarını (Twist mesajları gibi) içerir. 
+    ros2 topic pub <topic_name> <msg_type> '<args>' // mesajı nir konuya yayınlar...        ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.8}}"
+    ros2 service type <service_name>      //servisin türünün bulmak için kullanılacak komut
+    ros2 interface show std_srvs/srv/Empty.srv  //boş döndürür
+    ros2 interface show turtlesim/srv/Spawn  //spawn hizmeti hakkında bilgi verir
+    ros2 service call /clear std_srvs/srv/Empty  //kaplumbağa çizgilerini siler.
+    ros2 service call /spawn turtlesim/srv/Spawn "{x: 2, y: 2, theta: 0.2, name: ''}"  //yeni kaplumbağa çağırır.
+    ros2 param list     // parametreleri listeler
+    ros2 param get <node_name> <parameter_name>  //parametrelerin türünü ve değerini öğrenmek için kullanılır.
+    ros2 param set /turtlesim background_r 150  // arkaplanın rengi değişir.
+    ros2 param dump /turtlesim   //parametreleri kaydeder.
+    ros2 run <package_name> <executable_name> --ros-args --params-file <file_name> //kaydedilen parametreleri kullanarak aynı düğümü başlatmak için.
+    ros2 node info /turtlesim  //düğüm bilgisini verir
+    ros2 action list  //aksiyon listesini verir
+    ros2 action info /turtle1/rotate_absolute   eylemi daha ayrıntılı inceleyebilirsiniz.
+    ros2 action send_goal <action_name> <action_type> <values>  //bir eylemi hedef göndermek için ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}"   //geri bildirim için sonuna --feedback ekleriz.
+    rqt_console" aracı, ROS üzerinde çalışan sistemdeki günlük (log) mesajlarını görüntülemek ve analiz etmek için kullanılır. Bu araç, hata ayıklama ve sistem davranışını anlama süreçlerinde kullanışlıdır.
+    ros2 topic pub -r 1 /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0,y: 0.0,z: 0.0}}"    //hareket etmesini sağlar.
+        DEBUG: Genellikle hata ayıklama süreçlerinde kullanılır. Bu seviyedeki günlük mesajları, genellikle programın iç çalışma detaylarını içerir.
+    INFO: Genel bilgi mesajları için kullanılır. Programın normal çalışması hakkında bilgi sağlar.
+
+    WARN (Warning): Programın beklenen ancak potansiyel olarak sorunlu durumlarını belirtir. Uyarı seviyesindeki mesajlar, gelecekte sorunlara yol açabilecek durumları belirlemede yardımcı olabilir.
+
+    ERROR: Programın beklenmeyen ancak devam edebilen bir hata durumunu belirtir. Bu tür hatalar, programın devam etmesine engel olmadan ele alınabilir.
+
+    FATAL: Programın devam etmesini engelleyen kritik hata durumlarını belirtir. Bu tür hatalar, genellikle programın acil olarak kapatılmasını gerektirir.
+    ros2 topic list    //konu listesini gösterir.
+    ros2 bag record <topic_name>  //bir konuya yayınlanan verileri kaydetmek için komut sözdizimini kullanın:
+    ros2 bag record -o subset /turtle1/cmd_vel /turtle1/pose  //Birden fazla konuyu kaydetmek için kullanılır.
+    ros2 bag info subset  //subset dosyası hakkında bilgi verir.
+    ros2 bag play subset // kaplumbağayı harekete geçirir.Önceden çizildiği şekilde
+    ros2 topic hz /turtle1/pose    //hız hakkında bilgi verir.

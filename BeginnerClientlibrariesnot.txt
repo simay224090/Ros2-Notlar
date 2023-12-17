@@ -1,0 +1,167 @@
+ROS çalışma alanı, belirli bir yapıya sahip bir dizindir. Genellikle bir src alt dizini vardır. Bu alt dizinin içinde ROS paketlerinin kaynak kodunun bulunacağı yer bulunur. Aksi takdirde dizin genellikle boş başlar.
+Bir çalışma alanı oluşturmak için colcon u yüklemeliyiz. //sudo apt install python3-colcon-common-extensions
+mkdir -p ~/ros2_ws/src    //bu komut "ros2/examples" deposunun "foxy" dalındaki kodları içeren bir yerel kopya oluşturacaktır. Bu kopya, "src/examples" dizininde saklanacaktır.
+cd ~/ros2_ws                  //Çalışma alanı oluşturma.
+git clone https://github.com/ros2/examples src/examples -b foxy  //
+colcon build --symlink-install  //    build-install-log-src dizinlerini gösterir.
+source install/setup.bash    //çalışma alanı içindeki paketlerin ve bağımlılıklarının doğru bir şekilde bulunabilmesi için, ROS, setup.bash adlı bir dosyada gerekli ortam değişkenlerini tanımlar. Bu dosya, bir ROS çalışma alanını etkinleştirmek için kullanılır.
+ros2 run examples_rclcpp_minimal_subscriber subscriber_member_function  //calcon tarafından oluşturulan  yürütülebilir dosyaları çalıştırabiliriz.  (kaynaklamayı unutmayınız.)
+
+colcon test --packages-select YOUR_PKG_NAME --ctest-args -R YOUR_TEST_IN_PKG //Bir paketten belirli bir testi çalıştırmak istiyorsanız bu komut kullanılır.
+
+
+ Çalışma alanını oluşturmadan önce paket bağımlılıklarını çözmeniz gerekir. //Çalışma alanınızın kökünden (ros2_ws)  rosdep install -i --from-path src --rosdistro foxy -y komutu yazılır.
+
+Python’u kullanarak Paket Oluşturma
+
+•	package.xmlpaketle ilgili meta bilgileri içeren dosya
+•	resource/<package_name>paket için işaretleyici dosyası
+•	setup.cfgBir pakette yürütülebilir dosyalar olduğunda gereklidir, böylece bunları bulabilirros2 run
+•	setup.pypaketin nasıl kurulacağına ilişkin talimatlar içeren
+•	<package_name>- ROS 2 araçları tarafından paketinizi bulmak için kullanılan, paketinizle aynı adı taşıyan bir dizin şunları içerir:__init__.py
+
+Basit bir paket şuna benzeyen bir dosya yapısına sahip olabilir.
+      
+my_package/
+      package.xml
+      resource/my_package
+      setup.cfg
+      setup.py
+      my_package/
+
+
+ros2 pkg create --build-type ament_python --node-name my_node my_package   // pakette basit bir Merhaba Dünya türü yürütülebilir dosyası oluşturan isteğe bağlı bağımsız değişkeni --node-name kullanacaksınız.
+
+cd ~/ros2_ws      //köke dönün
+colcon build
+colcon build --packages-select my_package    // my_package paketini oluşturmak için şunu çalıştırabilirsiniz
+
+source install/local_setup.bash    //çalışma alanına kaynak sağlayın.
+ros2 run my_package my_node       //Paket oluşturma sırasında --node-name bağımsız değişkenini kullanarak oluşturduğunuz yürütülebilir dosyayı çalıştırmak için şu komutu girin
+Hi from my_package.          // çıktı
+my_package  package.xml  resource  setup.cfg  setup.py  test  //ros2_ws/src/my_package içinde, otomatik olarak oluşturulan dosya ve klasörleri göreceksiniz:ros2 pkg create
+ros2_ws/src/my_package konumundan, tercih ettiğiniz metin düzenleyiciyi kullanarak package.xml dosyasını açın  
+maintainer, maintainer_email ve description satırlarını package.xml ile eşleşecek şekilde düzenleyin.
+Dosyayı kaydetmeyi unutmayın. 
+
+
+Writing a simple publisher and subscriber (Python)
+Paketlerin çalışma alanının kökünde değil, src dizininde oluşturulması gerektiğini hatırlayın. Bu nedenle, ros2_ws/src'ye gidin ve paket oluşturma komutunu çalıştırın //ros2 pkg create --build-type ament_python py_pubsub
+  wget https://raw.githubusercontent.com/ros2/examples/foxy/rclpy/topics/minimal_publisher/examples_rclpy_minimal_publisher/publisher_member_function.py  //Bu kod konuşmacı kodunu içerir.  // __init__.py dosyasının yanında publisher_member_function.py adında yeni bir dosya olacak.
+<description>Examples of minimal publisher/subscriber using rclpy</description>
+<maintainer email="you@email.com">Your Name</maintainer>
+<license>Apache License 2.0</license>        //Bağımlılıklar bu şekilde düzenlenir.
+
+
+<exec_depend>rclpy</exec_depend>
+<exec_depend>std_msgs</exec_depend>   //Düğüm içe aktarılır
+
+entry_points={
+        'console_scripts': [
+                'talker = py_pubsub.publisher_member_function:main',
+        ],
+},              //giriş noktası eklenir.
+
+
+
+
+
+Sonraki düğümü oluşturmak için ros2_ws/src/py_pubsub/py_pubsub'e dönün. Terminalinize aşağıdaki kodu girin:  wget https://raw.githubusercontent.com/ros2/examples/foxy/rclpy/topics/minimal_subscriber/examples_rclpy_minimal_subscriber/subscriber_member_function.py
+
+__init__.py  publisher_member_function.py  subscriber_member_function.py  yeni dizindeki dosyalar bunlardır..
+  ros2_ws   de rosdep install -i --from-path src --rosdistro foxy -y çalıştırın. //eksik bağımlılıkları kontrol etmek için
+colcon build --packages-select py_pubsub
+ros2 run py_pubsub talker  // her 0.5 s de  Publishing: "Hello World:0 ......yazdırır.
+Başka bir terminal açın, kurulum dosyalarını ros2_ws içinden tekrar kaynaklayın ve ardından dinleyici düğümünü başlatın:  
+ros2 run py_pubsub listener         //I heard: "Hello World: 10"   Dinleyici, yayıncının o sırada açık olduğu mesaj sayısından başlayarak mesajları konsola yazdırmaya başlayacaktır
+
+
+ÖZEL MSG ve SRV Dosyası Oluşturma
+Workspace Oluşturma:
+Öncelikle ROS 2 paketinizin bulunduğu çalışma alanını oluşturun veya var olan bir çalışma alanına gidin.  //ros2 pkg create --build-type ament_cmake tutorial_interfaces
+mkdir msg srv
+ros2_ws/src/tutorial_interfaces konumunda.msg ve .srv dizinlerini olusurun.
+ tutorial_interfaces/msg dizininde, veri yapısını bildiren bir kod satırı içeren Num.msg adında yeni bir dosya oluşturun:  //   int64 num
+geometry_msgs/Point center
+float64 radius                   //yine aynı dizinde bu özel mesaj olusturulur.
+tutorial_interfaces/srv      //dizinine gidin ve AddThreeInts.srv adında yeni bir dosya 
+oluşturun:
+int64 a
+int64 b                   
+int64 c
+---
+int64 sum
+
+
+Artık özel arayüzler paketinizin tüm parçaları yerinde olduğuna göre paketi oluşturabilirsiniz. Çalışma alanınızın kökünde (~/ros2_ws) aşağıdaki komutu çalıştırın
+colcon build --packages-select tutorial_interfaces
+
+source install/setup.bash //    yeni bir terminalde workspace nızden kaynak sağlayıp
+ros2 interface show tutorial_interfaces/msg/Num    //komutunu kullanarak arayüz oluşturma işleminizin çalıştığını doğrulayabilirsiniz
+ros2 interface show tutorial_interfaces/msg/Sphere  geometry_msgs/Point center
+        float64 x
+        float64 y
+        float64 z
+float64 radius             //çıktı olmalı
+
+
+ros2 interface show tutorial_interfaces/srv/AddThreeInts  
+int64 a
+int64 b
+int64 c
+---
+int64 sum   //çıktı olmalı
+
+Bir sınıfta parametreleri kullanma
+
+1.Paketlerin çalışma alanının kökünde değil, src dizininde oluşturulması gerektiğini hatırlayın. ros2_ws/src adresine gidin ve yeni bir paket oluşturun
+ros2 pkg create --build-type ament_python python_parameters --dependencies rclpy
+2.her zaman olduğu gibi açıklamayı, bakımcı e-postasını, adını ve lisans bilgilerini package.xml'e eklediğinizden emin olun.
+3.ros2_ws/src/python_parameters/python_parameters dizininin içinde python_parameters_node.py adında yeni bir dosya oluşturun ve içine kodunuzu yazın.
+ÖNEMLİ  import ifadeleri paket bağımlılıklarını içe aktarmak için kullanılır.
+4.Parametre tanımlayıcı eklenir.
+5.Giriş noktası eklenir.
+6.Derlenir ve çalıştırılır. rosdep install -i --from-path src --rosdistro foxy -y
+Workspace in köküne geri dönülür (ros2_ws) ve yeni paket oluşturulur. /colcon build --packages-select python_parameters
+Yeni terminal açılarak ros2_ws adresine gidin ve kurulum dosyalarını kaynaklayın
+ros2 run python_parameters minimal_param_node    
+[INFO] [parameter_node]: Hello world! mesajı gelmelidir.
+
+Konsool aracılığıyla Parametre Değiştirme
+
+ros2 param list
+ros2 param set /minimal_param_node my_parameter earth
+[INFO] [minimal_param_node]: Hello earth!   çıktı bu şekilde değişir.
+
+
+SORUNLARI BULMAK İÇİN ROS2DOCTOR kullanımı
+ros2 doctor   //komutu yazılır
+All <n> checks passed     //ros2 kurulumuz mükemmel durumdaysa gelen mesaj
+
+<path>: <line>: UserWarning: <message>      //bir kaç uygun olmayan yapılandırma vardır.
+
+
+UserWarning: Distribution <distro> is not fully supported or tested. To get more consistent features, download a stable version at https://index.ros.org/doc/ros2/Installation/      //kararsız bir ros2 sürümü vardır.
+
+ros2 doctor --report //tam bir rapor almak için kullanılır.
+
+Unutmayın ki ros2doctor bir hata ayıklama aracı değildir; kodunuzdaki veya sisteminizin uygulama tarafındaki hatalara yardımcı olmaz.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
